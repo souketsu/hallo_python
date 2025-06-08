@@ -1,3 +1,4 @@
+'''
 a = input("输入第一个数字") # 输入的第一个数
 op = input("输入运算符 (+, -, *, /)") # 输入的运算符
 b = input("输入第二个数字") # 输入的第二个数
@@ -28,3 +29,5 @@ while True:
     result = calculate(a, b, op)
     print("结果是：", result)
     a = result  # 将上一次结果赋值给a
+
+'''
