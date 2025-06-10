@@ -1,73 +1,120 @@
 import tkinter as tk
 from tkinter import messagebox
+import math
 
 class Calculator:
     def __init__(self, root):
         self.root = root
-        self.root.title("图形界面计算器")  # 设置窗口标题
-        self.root.geometry("400x500")    # 设置窗口大小
-        self.root.resizable(False, False)  # 禁止窗口缩放
+        self.root.title("高级图形计算器")
+        self.root.geometry("420x600")
+        self.root.resizable(False, False)
 
-        self.expression = ""  # 用于保存当前输入的表达式
+        self.expression = ""
 
-        self.input_text = tk.StringVar()  # 用于绑定输入框内容
-
-        self.create_ui()  # 创建界面
+        self.input_text = tk.StringVar()
+        self.create_ui()
 
     def create_ui(self):
-        # 创建输入框区域
-        input_frame = tk.Frame(self.root, height=50, bd=2, relief=tk.RIDGE)
+        input_frame = tk.Frame(self.root, height=60, bg="#1c1c1c")
         input_frame.pack(pady=10, fill="x")
 
-        # 输入框
-        input_field = tk.Entry(input_frame, font=('Arial', 24), textvariable=self.input_text, justify='right')
-        input_field.pack(fill='both', ipady=10)
+        input_field = tk.Entry(
+            input_frame, font=('Arial', 24), textvariable=self.input_text,
+            justify='right', bg="#1c1c1c", fg="#00ff99", insertbackground='white'
+        )
+        input_field.pack(fill='both', ipady=20)
 
-        # 按钮区域
         btns_frame = tk.Frame(self.root)
         btns_frame.pack()
 
-        # 按钮布局
         buttons = [
             ["7", "8", "9", "/", "C"],
             ["4", "5", "6", "*", "("],
             ["1", "2", "3", "-", ")"],
-            ["0", ".", "=", "+", "Exit"]
+            ["0", ".", "=", "+", "⌫"],
+            ["sin", "cos", "tan", "sqrt", "^"],
+            ["π", "e", "1/x", "x²", "Exit"]
         ]
 
-        # 创建按钮并绑定事件
         for row in buttons:
             row_frame = tk.Frame(btns_frame)
             row_frame.pack(expand=True, fill='both')
             for btn in row:
-                b = tk.Button(row_frame, text=btn, font=('Arial', 18), height=2, width=6,
-                              command=lambda x=btn: self.on_button_click(x))  # 按钮点击事件
+                b = tk.Button(
+                    row_frame, text=btn, font=('Arial', 18), height=2, width=5,
+                    bg="#2e2e2e", fg="#ffffff", activebackground="#4e4e4e",
+                    command=lambda x=btn: self.on_button_click(x)
+                )
                 b.pack(side='left', expand=True, fill='both')
 
+        self.root.bind('<Key>', self.on_keypress)
+
     def on_button_click(self, char):
-        # 清空输入
         if char == "C":
             self.expression = ""
-            self.input_text.set("")
-        # 计算表达式
         elif char == "=":
-            try:
-                result = str(round(eval(self.expression), 4))  # 计算并四舍五入到4位小数
-                self.input_text.set(result)
-                self.expression = result  # 结果作为下一次的表达式
-            except Exception as e:
-                messagebox.showerror("错误", "无效的表达式")  # 错误提示
-                self.expression = ""
-                self.input_text.set("")
-        # 退出程序
+            self.evaluate_expression()
+            return
+        elif char == "⌫":
+            self.expression = self.expression[:-1]
+        elif char == "π":
+            self.expression += str(math.pi)
+        elif char == "e":
+            self.expression += str(math.e)
+        elif char == "sqrt":
+            self.expression += "sqrt("
+        elif char == "^":
+            self.expression += "**"
+        elif char == "1/x":
+            self.expression += "1/("
+        elif char == "x²":
+            self.expression += "**2"
+        elif char == "sin":
+            self.expression += "sin("
+        elif char == "cos":
+            self.expression += "cos("
+        elif char == "tan":
+            self.expression += "tan("
         elif char == "Exit":
             self.root.quit()
-        # 其他按钮（数字、运算符等）追加到表达式
         else:
             self.expression += str(char)
+
+        self.input_text.set(self.expression)
+
+    def evaluate_expression(self):
+        try:
+            expr = self.expression.replace("sqrt", "math.sqrt")
+            expr = expr.replace("sin", "math.sin(math.radians")
+            expr = expr.replace("cos", "math.cos(math.radians")
+            expr = expr.replace("tan", "math.tan(math.radians")
+
+            # 补全括号（因为我们加了 math.radians(
+            open_count = expr.count("math.radians(")
+            close_needed = open_count
+            expr += ")" * close_needed
+
+            result = eval(expr, {"__builtins__": None, "math": math})
+            result = round(result, 6)
+            self.input_text.set(str(result))
+            self.expression = str(result)
+        except Exception as e:
+            messagebox.showerror("错误", "表达式无效或无法计算。")
+            self.expression = ""
+            self.input_text.set("")
+
+    def on_keypress(self, event):
+        key = event.char
+        if key in '0123456789.+-*/()':
+            self.expression += key
+            self.input_text.set(self.expression)
+        elif event.keysym == "Return":
+            self.evaluate_expression()
+        elif event.keysym == "BackSpace":
+            self.expression = self.expression[:-1]
             self.input_text.set(self.expression)
 
 if __name__ == "__main__":
-    root = tk.Tk()  # 创建主窗口
-    app = Calculator(root)  # 创建计算器实例
-    root.mainloop()  # 进入主循环
+    root = tk.Tk()
+    app = Calculator(root)
+    root.mainloop()
